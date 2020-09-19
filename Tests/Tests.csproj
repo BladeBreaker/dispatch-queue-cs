@@ -16,6 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DispatchSerialQueue\SerialQueue.csproj" />
+    <ProjectReference Include="..\DispatchQueue\DispatchQueue.csproj" />
   </ItemGroup>
 </Project>
