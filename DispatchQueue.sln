@@ -1,0 +1,35 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{20910728-4A79-4E43-BB84-7442042A0C61}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DispatchQueue", "DispatchQueue\DispatchQueue.csproj", "{6A759ED2-3D70-48B8-8354-B691627D04EC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MainTest", "MainTest\MainTest.csproj", "{FE42E2E1-41ED-4FDC-9553-9DC84E3C9B64}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|anycpu = Debug|anycpu
+		Release|anycpu = Release|anycpu
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{20910728-4A79-4E43-BB84-7442042A0C61}.Debug|anycpu.ActiveCfg = Debug|Any CPU
+		{20910728-4A79-4E43-BB84-7442042A0C61}.Debug|anycpu.Build.0 = Debug|Any CPU
+		{20910728-4A79-4E43-BB84-7442042A0C61}.Release|anycpu.ActiveCfg = Release|Any CPU
+		{20910728-4A79-4E43-BB84-7442042A0C61}.Release|anycpu.Build.0 = Release|Any CPU
+		{6A759ED2-3D70-48B8-8354-B691627D04EC}.Debug|anycpu.ActiveCfg = Debug|Any CPU
+		{6A759ED2-3D70-48B8-8354-B691627D04EC}.Debug|anycpu.Build.0 = Debug|Any CPU
+		{6A759ED2-3D70-48B8-8354-B691627D04EC}.Release|anycpu.ActiveCfg = Release|Any CPU
+		{6A759ED2-3D70-48B8-8354-B691627D04EC}.Release|anycpu.Build.0 = Release|Any CPU
+		{FE42E2E1-41ED-4FDC-9553-9DC84E3C9B64}.Debug|anycpu.ActiveCfg = Debug|anycpu
+		{FE42E2E1-41ED-4FDC-9553-9DC84E3C9B64}.Debug|anycpu.Build.0 = Debug|anycpu
+		{FE42E2E1-41ED-4FDC-9553-9DC84E3C9B64}.Release|anycpu.ActiveCfg = Release|anycpu
+		{FE42E2E1-41ED-4FDC-9553-9DC84E3C9B64}.Release|anycpu.Build.0 = Release|anycpu
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		Policies = $0
+		$0.DotNetNamingPolicy = $1
+		$1.DirectoryNamespaceAssociation = PrefixedHierarchical
+		$0.StandardHeader = $2
+	EndGlobalSection
+EndGlobal
