@@ -15,10 +15,13 @@ namespace Dispatch
         // used only via interlocked exchange, thus it must be an int and not a bool
         private int mIsTaskRunning = 0;
 
+        private WaitCallback mWaitCallback;
+
 
         public SerialQueue(IThreadPool threadPool)
         {
             mThreadPool = threadPool;
+            mWaitCallback = OnExecuteWorkItem;
         }
         
         /// <summary>
@@ -77,14 +80,7 @@ namespace Dispatch
                             {
                                 wasTaskQueued = true;
 
-                                mThreadPool.QueueWorkItem(() =>
-                                {
-                                    task();
-
-                                    _ = Interlocked.Exchange(ref mIsTaskRunning, 0);
-
-                                    AttemptDequeue();
-                                });
+                                mThreadPool.QueueWorkItem(mWaitCallback, task);
                             }
                         }
                     }
@@ -96,6 +92,16 @@ namespace Dispatch
                     }
                 }
             }
+        }
+
+        private void OnExecuteWorkItem(object userData)
+        {
+            Action task = (Action)userData;
+            task();
+
+            _ = Interlocked.Exchange(ref mIsTaskRunning, 0);
+
+            AttemptDequeue();
         }
     }
 }

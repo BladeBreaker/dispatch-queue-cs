@@ -1,8 +1,9 @@
-﻿using System;
+﻿#nullable enable
+
 namespace Dispatch
 {
     public interface IThreadPool
     {
-        public void QueueWorkItem(Action task);
+        public void QueueWorkItem(System.Threading.WaitCallback task, object? userdata);
     }
 }

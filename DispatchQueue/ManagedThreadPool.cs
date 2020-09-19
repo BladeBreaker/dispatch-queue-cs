@@ -1,4 +1,4 @@
-﻿using System;
+﻿#nullable enable
 
 namespace Dispatch
 {
@@ -8,12 +8,9 @@ namespace Dispatch
         {
         }
 
-        public void QueueWorkItem(Action task)
+        public void QueueWorkItem(System.Threading.WaitCallback task, object? userData)
         {
-            _ = System.Threading.ThreadPool.QueueUserWorkItem((_) =>
-            {
-                task();
-            });
+            _ = System.Threading.ThreadPool.QueueUserWorkItem(task, userData);
         }
     }
 }

@@ -16,7 +16,7 @@ namespace Tests
         public void AsyncRunsOnSeparateThreads()
         {
             SerialQueue queue = new SerialQueue(new ManagedThreadPool());
-
+            
             int threadId = Thread.CurrentThread.ManagedThreadId;
 
             for (int i = 0; i < 10; ++i)
