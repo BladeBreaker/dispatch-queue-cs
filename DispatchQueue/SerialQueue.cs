@@ -41,24 +41,6 @@ namespace Dispatch
             AttemptDequeue();
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="task"></param>
-        public void DispatchSync(Action? task)
-        {
-            TaskCompletionSource<object?> tcs = new TaskCompletionSource<object?>();
-
-            DispatchAsync(() =>
-            {
-                task?.Invoke();
-                tcs.SetResult(null);
-            });
-
-            tcs.Task.Wait();
-        }
-
-
         private void AttemptDequeue()
         {
             if (!mQueue.IsEmpty)
