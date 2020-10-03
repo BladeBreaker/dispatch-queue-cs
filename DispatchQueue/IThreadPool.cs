@@ -4,6 +4,6 @@ namespace Dispatch
 {
     public interface IThreadPool
     {
-        public void QueueWorkItem(System.Threading.WaitCallback task, object? userdata);
+        public void QueueWorkItem(System.Threading.WaitCallback work, object? userdata);
     }
 }

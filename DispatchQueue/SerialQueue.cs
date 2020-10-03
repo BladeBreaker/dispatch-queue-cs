@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Threading;
-using System.Threading.Tasks;
 
-#nullable enable
 
 namespace Dispatch
 {
@@ -28,14 +26,15 @@ namespace Dispatch
         /// 
         /// </summary>
         /// <param name="task"></param>
-        public void DispatchAsync(Action task)
+        public void DispatchAsync(Action work)
         {
-            if (task == null)
+            // can't allow nulls in our queue
+            if (work == null)
             {
                 return;
             }
             
-            mQueue.Enqueue(task);
+            mQueue.Enqueue(work);
 
             // try to dequeue and run a task if there isn't one running already.
             AttemptDequeue();
@@ -53,24 +52,9 @@ namespace Dispatch
                     // nothing was running, and we have some tasks in the queue.
                     // Lets grab the next task and schedule it
 
-                    bool wasTaskQueued = false;
-                    while (!wasTaskQueued && !mQueue.IsEmpty)
+                    if (mQueue.TryDequeue(out Action task))
                     {
-                        if (mQueue.TryDequeue(out Action? task))
-                        {
-                            if (task != null)
-                            {
-                                wasTaskQueued = true;
-
-                                mThreadPool.QueueWorkItem(mWaitCallback, task);
-                            }
-                        }
-                    }
-
-                    // if somehow we never got to queue a task, then set that we're not running.
-                    if (!wasTaskQueued)
-                    {
-                        _ = Interlocked.Exchange(ref mIsTaskRunning, 0);
+                        mThreadPool.QueueWorkItem(mWaitCallback, task);
                     }
                 }
             }
@@ -79,7 +63,7 @@ namespace Dispatch
         private void OnExecuteWorkItem(object userData)
         {
             Action task = (Action)userData;
-            task();
+            task?.Invoke();
 
             _ = Interlocked.Exchange(ref mIsTaskRunning, 0);
 
