@@ -8,9 +8,9 @@ namespace Dispatch
         {
         }
 
-        public void QueueWorkItem(System.Threading.WaitCallback work, object? userData)
+        public void QueueWorkItem(System.Threading.WaitCallback work, object? context)
         {
-            _ = System.Threading.ThreadPool.QueueUserWorkItem(work, userData);
+            _ = System.Threading.ThreadPool.QueueUserWorkItem(work, context);
         }
     }
 }
