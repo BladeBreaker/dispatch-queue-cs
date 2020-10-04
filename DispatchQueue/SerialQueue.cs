@@ -15,7 +15,7 @@ namespace Dispatch
         private struct WorkData
         {
             public WaitCallback Work;
-            public object Context;
+            public object? Context;
         }
 
         private readonly IThreadPool mThreadPool;
@@ -41,7 +41,7 @@ namespace Dispatch
         /// 
         /// </summary>
         /// <param name="task"></param>
-        public void DispatchAsync(object context, WaitCallback work)
+        public void DispatchAsync(object? context, WaitCallback work)
         {
             // can't allow nulls in our queue
             if (work == null)

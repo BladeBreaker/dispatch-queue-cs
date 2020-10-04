@@ -21,7 +21,7 @@ namespace Tests
 
             for (int i = 0; i < 10; ++i)
             {
-                queue.DispatchAsync(() =>
+                queue.DispatchAsync(null, (_) =>
                 {
                     Assert.AreNotEqual(threadId, Thread.CurrentThread.ManagedThreadId);
                 });
@@ -37,7 +37,7 @@ namespace Tests
 
             for (int i = 0; i < 10; ++i)
             {
-                queue.DispatchSync(() =>
+                queue.DispatchSync(null, (_) =>
                 {
                     Assert.AreNotEqual(threadId, Thread.CurrentThread.ManagedThreadId);
                 });
@@ -53,7 +53,7 @@ namespace Tests
 
             for (int i = 0; i < 100; ++i)
             {
-                queue.DispatchSync(() =>
+                queue.DispatchSync(null, (_) =>
                 {
                     Assert.AreEqual(numberTest++, i);
                 });
@@ -70,7 +70,7 @@ namespace Tests
 
             for (int i = 0; i < 10; ++i)
             {
-                queue.DispatchAsync(() =>
+                queue.DispatchAsync(null, (_) =>
                 {
                     Assert.IsFalse(taskRunning);
                     taskRunning = true;
@@ -82,7 +82,7 @@ namespace Tests
                 });
             }
 
-            queue.DispatchSync(() =>
+            queue.DispatchSync(null, (_) =>
             {
                 // just to ensure that the tests don't finish prematurely.
             });
@@ -99,13 +99,13 @@ namespace Tests
             for (int i = 0; i < 100; ++i)
             {
                 int localValue = i;
-                queue.DispatchAsync(() =>
+                queue.DispatchAsync(null, (_) =>
                 {
                     Assert.AreEqual(numberTest++, localValue);
                 });
             }
 
-            queue.DispatchSync(() =>
+            queue.DispatchSync(null, (_) =>
             {
                 Assert.AreEqual(numberTest, 100);
             });
