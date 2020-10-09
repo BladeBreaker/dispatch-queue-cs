@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 
 #nullable enable
@@ -24,7 +26,7 @@ namespace Dispatch
         // used only via interlocked exchange, thus it must be an int and not a bool
         private int mIsTaskRunning = 0;
 
-        private WaitCallback mWaitCallback;
+        private WaitCallback mExecuteCurrentWorkItem;
 
         // holding the next work and Context to avoid boxing the struct into the context param of mWaitCallback
         // This is OK because this is a SerialQueue which guarantees that exactly one task is executed at a time
@@ -33,8 +35,15 @@ namespace Dispatch
 
         public SerialQueue(IThreadPool threadPool)
         {
+            if (threadPool == null)
+            {
+                throw new ArgumentNullException("threadPool", "Threadpool parameter must not be null");
+            }
+
             mThreadPool = threadPool;
-            mWaitCallback = OnExecuteWorkItem;
+            mExecuteCurrentWorkItem = OnExecuteWorkItem;
+            mTimer = new Timer(OnTimerExecute);
+            mScheduleWorkForExecutionCallback = OnScheduleWorkForExecution;
         }
         
         /// <summary>
@@ -70,7 +79,7 @@ namespace Dispatch
                     if (mQueue.TryDequeue(out WorkData work))
                     {
                         mCurrentWork = work;
-                        mThreadPool.QueueWorkItem(mWaitCallback, null);
+                        mThreadPool.QueueWorkItem(mExecuteCurrentWorkItem, null);
                     }
                 }
             }
@@ -83,6 +92,110 @@ namespace Dispatch
             _ = Interlocked.Exchange(ref mIsTaskRunning, 0);
 
             AttemptDequeue();
+        }
+
+        private struct TimerQueueData
+        {
+            public DateTime TargetTime;
+            public WaitCallback Work;
+            public object? Context;
+        }
+
+        //mTimerQueueData is used across multiple threads and must be locked
+        // all TimerQueueData's added to this list will be ordered on insertion from oldest TargetTime to earliest
+        List<TimerQueueData> mTimerQueueData = new List<TimerQueueData>();
+        Timer mTimer;
+
+        WaitCallback mScheduleWorkForExecutionCallback;
+
+        public void DispatchAfter(TimeSpan when, object? context, WaitCallback work)
+        {
+            if (work == null)
+            {
+                return;
+            }
+
+            TimerQueueData data = new TimerQueueData()
+            {
+                TargetTime = DateTime.Now + when,
+                Work = work,
+                Context = context
+            };
+
+            // boxed "data" but ... I don't see an alternative
+            mThreadPool.QueueWorkItem(mScheduleWorkForExecutionCallback, data); 
+
+            //idea: whenever we dispatch after... we need to then try to reschedule the timer
+            // if our current task needs to execute before the task that the timer is currently waiting for
+            // to do any of these checks... we would probably need to lock a mutex... I want to avoid that
+            // at all costs on the "API" function as it's likely to be the main thread.
+            // therefor: we can submit tasks to the threadpool (assume concurrent) to run a check whenever
+            // we add new tasks to the timer queue.
+            // This can at least guarantee that we check to see if we need to reschedule the timer every time
+            // we add a new task
+
+            // unfortunately we will need to box the TimerQueueData when we submit it to the ThreadPool... no way around it.
+        }
+
+        class TimerQueueDataComparer : IComparer<TimerQueueData>
+        {
+            public int Compare(TimerQueueData x, TimerQueueData y)
+            {
+                return x.TargetTime.CompareTo(y.TargetTime);
+            }
+        }
+        TimerQueueDataComparer mTimerQueueDataComparer = new TimerQueueDataComparer();
+
+        private void OnScheduleWorkForExecution(object context)
+        {
+            TimerQueueData data = (TimerQueueData)context;
+
+            // this list must never change or be made public
+            // if that ever changes, then we'll need to make an object used for locks.
+            lock(mTimerQueueData)
+            {
+                // insert into the list sorted by TargetTime (earlier TargetTime is at the start of the list)
+                var index = mTimerQueueData.BinarySearch(data, mTimerQueueDataComparer);
+                if (index < 0)
+                {
+                    index = ~index;
+                }
+                mTimerQueueData.Insert(index, data);
+
+                DateTime earliestTarget = mTimerQueueData.Last().TargetTime;
+
+                if (data.TargetTime < earliestTarget)
+                {
+                    mTimer.Change(earliestTarget - DateTime.Now, Timeout.InfiniteTimeSpan);
+                }
+            }
+        }
+
+        private void OnTimerExecute(object context)
+        {
+            // this list must never change or be made public
+            // if that ever changes, then we'll need to make an object used for locks.
+            lock (mTimerQueueData)
+            {
+                // loop through the list and find the timers data that all need to fire now
+                // schedule them in order
+
+                for (int i = mTimerQueueData.Count - 1; i >= 0; --i)
+                {
+                    TimerQueueData data = mTimerQueueData[i];
+                    DateTime now = DateTime.Now;
+                    if (data.TargetTime <= now)
+                    {
+                        DispatchAsync(data.Context, data.Work);
+                        mTimerQueueData.RemoveAt(i);
+                    }
+                    else
+                    {
+                        mTimer.Change(data.TargetTime - now, Timeout.InfiniteTimeSpan);
+                        break;
+                    }
+                }
+            }
         }
     }
 }

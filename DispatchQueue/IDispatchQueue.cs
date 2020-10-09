@@ -9,6 +9,7 @@ namespace Dispatch
     public interface IDispatchQueue
     {
         public void DispatchAsync(object? context, WaitCallback work);
+        public void DispatchAfter(TimeSpan when, object? context, WaitCallback work);
     }
 
 
