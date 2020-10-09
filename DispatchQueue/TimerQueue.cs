@@ -13,18 +13,23 @@ namespace Dispatch
     {
         #region Internal Declarations
 
-        private struct TimerQueueData
+        private struct TimerQueueData : IComparable<TimerQueueData>
         {
             public DateTime TargetTime;
             public WaitCallback Work;
             public object? Context;
+
+            public int CompareTo(TimerQueueData other)
+            {
+                return TargetTime.CompareTo(other.TargetTime);
+            }
         }
 
         private class TimerQueueDataComparer : IComparer<TimerQueueData>
         {
             public int Compare(TimerQueueData x, TimerQueueData y)
             {
-                return x.TargetTime.CompareTo(y.TargetTime);
+                return y.TargetTime.CompareTo(x.TargetTime);
             }
         }
 
@@ -96,7 +101,7 @@ namespace Dispatch
             // if that ever changes, then we'll need to make an object used for locks.
             lock (mTimerQueueData)
             {
-                // insert into the list sorted by TargetTime (earlier TargetTime is at the start of the list)
+                // insert into the list sorted by TargetTime (earlier TargetTime is at the end of the list)
                 var index = mTimerQueueData.BinarySearch(data, mTimerQueueDataComparer);
                 if (index < 0)
                 {
@@ -105,8 +110,7 @@ namespace Dispatch
                 mTimerQueueData.Insert(index, data);
 
                 DateTime earliestTarget = mTimerQueueData.Last().TargetTime;
-
-                if (data.TargetTime < earliestTarget)
+                if (data.TargetTime < earliestTarget || mTimerQueueData.Count == 1)
                 {
                     mTimer.Change(earliestTarget - DateTime.Now, Timeout.InfiniteTimeSpan);
                 }

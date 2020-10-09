@@ -3,6 +3,7 @@ using System;
 using System.Threading;
 
 using Dispatch;
+using System.Diagnostics;
 
 
 #nullable enable
@@ -12,6 +13,18 @@ namespace Tests
     [TestClass]
     public class SerialQueueTests
     {
+        private TestContext testContextInstance;
+
+        /// <summary>
+        ///  Gets or sets the test context which provides
+        ///  information about and functionality for the current test run.
+        ///</summary>
+        public TestContext TestContext
+        {
+            get { return testContextInstance; }
+            set { testContextInstance = value; }
+        }
+
         [TestMethod]
         public void AsyncRunsOnSeparateThreads()
         {
@@ -109,6 +122,64 @@ namespace Tests
             {
                 Assert.AreEqual(numberTest, 100);
             });
+        }
+
+        [TestMethod]
+        public void TimerQueueActuallyFires()
+        {
+            SerialQueue queue = new SerialQueue(new ManagedThreadPool());
+            AutoResetEvent waitHandle = new AutoResetEvent(false);
+
+            WaitCallback cb = (_) =>
+            {
+                waitHandle.Set();
+            };
+
+            queue.DispatchAfter(TimeSpan.FromMilliseconds(10), null, cb);
+
+            Assert.IsTrue(waitHandle.WaitOne(TimeSpan.FromSeconds(1)));
+        }
+
+        [TestMethod]
+        public void TimerQueueFiresInProperOrder()
+        {
+            SerialQueue queue = new SerialQueue(new ManagedThreadPool());
+            AutoResetEvent waitHandle = new AutoResetEvent(false);
+
+            int numberOfExecutions = 0;
+
+            bool firstSucceeded = false;
+            bool secondSucceeded = false;
+            bool thirdSucceeded = false;
+
+            WaitCallback first = (_) =>
+            {
+                firstSucceeded = numberOfExecutions == 0;
+                numberOfExecutions++;
+            };
+
+            WaitCallback second = (_) =>
+            {
+                secondSucceeded = numberOfExecutions == 1;
+                numberOfExecutions++;
+            };
+
+            WaitCallback third = (_) =>
+            {
+                thirdSucceeded = numberOfExecutions == 2;
+                numberOfExecutions++;
+                waitHandle.Set();
+            };
+
+            queue.DispatchAfter(TimeSpan.FromMilliseconds(15), null, first);
+            queue.DispatchAfter(TimeSpan.FromMilliseconds(30), null, second);
+            queue.DispatchAfter(TimeSpan.FromMilliseconds(45), null, third);
+
+            Assert.IsTrue(waitHandle.WaitOne(TimeSpan.FromSeconds(1)));
+
+            Assert.IsTrue(firstSucceeded);
+            Assert.IsTrue(secondSucceeded);
+            Assert.IsTrue(thirdSucceeded);
         }
     }
 }
