@@ -10,6 +10,7 @@ namespace Dispatch
     {
         public void DispatchAsync(object? context, WaitCallback work);
         public void DispatchAfter(TimeSpan when, object? context, WaitCallback work);
+        public void DispatchAfter(DateTime when, object? context, WaitCallback work);
     }
 
 

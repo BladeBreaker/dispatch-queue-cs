@@ -72,6 +72,11 @@ namespace Dispatch
 
         public void DispatchAfter(TimeSpan when, object? context, WaitCallback work)
         {
+            DispatchAfter(DateTime.Now + when, context, work);
+        }
+
+        public void DispatchAfter(DateTime when, object? context, WaitCallback work)
+        {
             if (work == null)
             {
                 throw new ArgumentNullException("work");
@@ -79,7 +84,7 @@ namespace Dispatch
 
             TimerQueueData data = new TimerQueueData()
             {
-                TargetTime = DateTime.Now + when,
+                TargetTime = when,
                 Work = work,
                 Context = context
             };

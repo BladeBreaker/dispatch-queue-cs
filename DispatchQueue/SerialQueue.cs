@@ -84,6 +84,11 @@ namespace Dispatch
             mTimerQueue.DispatchAfter(when, context, work);
         }
 
+        public void DispatchAfter(DateTime when, object? context, WaitCallback work)
+        {
+            mTimerQueue.DispatchAfter(when, context, work);
+        }
+
         #endregion
 
 
