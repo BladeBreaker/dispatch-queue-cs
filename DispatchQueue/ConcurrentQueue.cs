@@ -7,16 +7,13 @@ namespace Dispatch
 {
     public class ConcurrentQueue : IDispatchQueue
     {
-        IThreadPool mThreadPool;
+        private readonly IThreadPool mThreadPool;
+        private readonly TimerQueue mTimerQueue;
 
         public ConcurrentQueue(IThreadPool threadPool)
         {
-            if (threadPool == null)
-            {
-                throw new ArgumentNullException("threadPool", "Threadpool parameter must not be null");
-            }
-
-            mThreadPool = threadPool;
+            mThreadPool = threadPool ?? throw new ArgumentNullException("threadPool");
+            mTimerQueue = new TimerQueue(this, threadPool);
         }
 
         public void DispatchAsync(object? context, WaitCallback work)
@@ -26,7 +23,7 @@ namespace Dispatch
 
         public void DispatchAfter(TimeSpan when, object? context, WaitCallback work)
         {
-
+            mTimerQueue.DispatchAfter(when, context, work);
         }
     }
 }
