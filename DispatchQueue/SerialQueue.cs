@@ -10,7 +10,7 @@ namespace Dispatch
 {
     /// <summary>
     /// <para>
-    /// SerialQueue which takes work to be executed serially on a given threadpool
+    /// SerialQueue which takes work to be executed serially on a given thread pool
     /// </para>
     /// This implementation attempts to avoid allocations wherever possible 
     /// </summary>
@@ -18,6 +18,9 @@ namespace Dispatch
     {
         #region Internal Declarations
 
+        /// <summary>
+        /// Struct to hold all the data required to perform work
+        /// </summary>
         private struct WorkData
         {
             public WaitCallback Work;
@@ -29,19 +32,42 @@ namespace Dispatch
 
         #region Member Variables
 
-        TimerQueue mTimerQueue;
+        /// <summary>
+        /// TimerQueue to assist with the DispatchAfter functionality
+        /// </summary>
+        private readonly TimerQueue mTimerQueue;
 
+
+        /// <summary>
+        /// Thread pool interface to submit work to
+        /// </summary>
         private readonly IThreadPool mThreadPool;
 
+
+        /// <summary>
+        /// Queue to serialize and hold the work to perform which also avoids locking
+        /// </summary>
         private readonly ConcurrentQueue<WorkData> mQueue = new ConcurrentQueue<WorkData>();
 
-        // used only via interlocked exchange, thus it must be an int and not a bool
+
+        /// <summary>
+        /// Flag to indicate if we are running a task currently
+        /// This flag will only be modified via Interlocked style Atomic functions
+        /// </summary>
         private int mIsTaskRunning = 0;
 
-        private WaitCallback mExecuteCurrentWorkItem;
 
-        // holding the next work and Context to avoid boxing the struct into the context param of mWaitCallback
-        // This is OK because this is a SerialQueue which guarantees that exactly one task is executed at a time
+        /// <summary>
+        /// Delegate constructed and held in a member variable to avoid any potential allocations
+        /// </summary>
+        private readonly WaitCallback mOnExecuteWorkItemFunction;
+
+
+        /// <summary>
+        /// This is a field to hold the current work that we need to perform
+        /// holding the next work and Context to avoid boxing the struct into the context param of a callback
+        /// This is OK because this is a SerialQueue which guarantees that exactly one task is executed at a time
+        /// </summary>
         private WorkData mCurrentWork;
 
         #endregion
@@ -49,11 +75,15 @@ namespace Dispatch
 
         #region Constructors
 
+        /// <summary>
+        /// Constructs a SerialQueue which will schedule work onto the passed thread pool
+        /// </summary>
+        /// <param name="threadPool">The thread pool that this SerialQueue will post work to. Must not be null</param>
         public SerialQueue(IThreadPool threadPool)
         {
             mThreadPool = threadPool ?? throw new ArgumentNullException("threadPool");
             mTimerQueue = new TimerQueue(this, threadPool);
-            mExecuteCurrentWorkItem = OnExecuteWorkItem;
+            mOnExecuteWorkItemFunction = OnExecuteWorkItem;
         }
 
         #endregion
@@ -62,9 +92,10 @@ namespace Dispatch
         #region Public Methods
 
         /// <summary>
-        /// 
+        /// Will dispatch the work delegate to the thread pool once all the previously dispatched work is completed
         /// </summary>
-        /// <param name="task"></param>
+        /// <param name="context">User data to pass to the work delegate</param>
+        /// <param name="work">Delegate which will perform the work. Must not be null</param>
         public void DispatchAsync(object? context, WaitCallback work)
         {
             if (work == null)
@@ -72,18 +103,31 @@ namespace Dispatch
                 throw new ArgumentNullException("work");
             }
 
-
             mQueue.Enqueue(new WorkData { Work = work, Context = context });
 
             // try to dequeue and run a task if there isn't one running already.
             AttemptDequeue();
         }
 
+
+        /// <summary>
+        /// Will dispatch the work delegate to this queue once at least the specified amount of time has passed
+        /// </summary>
+        /// <param name="when">Amount of time to wait before submitting the work to this queue</param>
+        /// <param name="context">User data to pass to the work delegate</param>
+        /// <param name="work">Delegate which will perform the work. Must not be null</param>
         public void DispatchAfter(TimeSpan when, object? context, WaitCallback work)
         {
             mTimerQueue.DispatchAfter(when, context, work);
         }
 
+
+        /// <summary>
+        /// Will dispatch the work delegate to this queue after the current time has passed the specified date
+        /// </summary>
+        /// <param name="when">Date after which the work will be submitted to this queue</param>
+        /// <param name="context">User data to pass to the work delegate</param>
+        /// <param name="work">Delegate which will perform the work. Must not be null</param>
         public void DispatchAfter(DateTime when, object? context, WaitCallback work)
         {
             mTimerQueue.DispatchAfter(when, context, work);
@@ -94,6 +138,9 @@ namespace Dispatch
 
         #region Private Methods
 
+        /// <summary>
+        /// Will attempt to Dequeue some work if there is none running
+        /// </summary>
         private void AttemptDequeue()
         {
             if (!mQueue.IsEmpty)
@@ -109,12 +156,17 @@ namespace Dispatch
                     if (mQueue.TryDequeue(out WorkData work))
                     {
                         mCurrentWork = work;
-                        mThreadPool.QueueWorkItem(mExecuteCurrentWorkItem, null);
+                        mThreadPool.QueueWorkItem(mOnExecuteWorkItemFunction, null);
                     }
                 }
             }
         }
 
+
+        /// <summary>
+        /// Internal callback from the thread pool to perform some work
+        /// </summary>
+        /// <param name="context">User data to pass to the work delegate</param>
         private void OnExecuteWorkItem(object? context)
         {
             mCurrentWork.Work(mCurrentWork.Context);
