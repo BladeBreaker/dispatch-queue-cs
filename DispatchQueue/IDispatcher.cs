@@ -2,7 +2,7 @@
 
 namespace Dispatch
 {
-    public interface IThreadPool
+    public interface IDispatcher
     {
         public void QueueWorkItem(System.Threading.WaitCallback work, object? context);
     }

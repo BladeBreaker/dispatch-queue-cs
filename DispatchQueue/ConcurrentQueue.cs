@@ -18,7 +18,7 @@ namespace Dispatch
         /// <summary>
         /// Thread pool interface to submit work to
         /// </summary>
-        private readonly IThreadPool mThreadPool;
+        private readonly IDispatcher mDispatcher;
 
         #endregion
 
@@ -29,10 +29,10 @@ namespace Dispatch
         /// Constructs a concurrent queue which will schedule work onto the passed thread pool
         /// </summary>
         /// <param name="threadPool">The thread pool that this SerialQueue will post work to. Must not be null</param>
-        public ConcurrentQueue(IThreadPool threadPool)
+        public ConcurrentQueue(IDispatcher dispatcher)
         {
-            mThreadPool = threadPool ?? throw new ArgumentNullException("threadPool");
-            mTimerQueue = new TimerQueue(this, threadPool);
+            mDispatcher = dispatcher ?? throw new ArgumentNullException("dispatcher");
+            mTimerQueue = new TimerQueue(this, dispatcher);
         }
 
         #endregion
@@ -47,7 +47,7 @@ namespace Dispatch
         /// <param name="work">Delegate which will perform the work. Must not be null</param>
         public void DispatchAsync(object? context, WaitCallback work)
         {
-            mThreadPool.QueueWorkItem(work, context);
+            mDispatcher.QueueWorkItem(work, context);
         }
 
 

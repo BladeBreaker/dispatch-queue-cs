@@ -41,7 +41,7 @@ namespace Dispatch
         /// <summary>
         /// Thread pool interface to submit work to
         /// </summary>
-        private readonly IThreadPool mThreadPool;
+        private readonly IDispatcher mDispatcher;
 
 
         /// <summary>
@@ -79,10 +79,10 @@ namespace Dispatch
         /// Constructs a SerialQueue which will schedule work onto the passed thread pool
         /// </summary>
         /// <param name="threadPool">The thread pool that this SerialQueue will post work to. Must not be null</param>
-        public SerialQueue(IThreadPool threadPool)
+        public SerialQueue(IDispatcher dispatcher)
         {
-            mThreadPool = threadPool ?? throw new ArgumentNullException("threadPool");
-            mTimerQueue = new TimerQueue(this, threadPool);
+            mDispatcher = dispatcher ?? throw new ArgumentNullException("dispatcher");
+            mTimerQueue = new TimerQueue(this, dispatcher);
             mOnExecuteWorkItemFunction = OnExecuteWorkItem;
         }
 
@@ -156,7 +156,7 @@ namespace Dispatch
                     if (mQueue.TryDequeue(out WorkData work))
                     {
                         mCurrentWork = work;
-                        mThreadPool.QueueWorkItem(mOnExecuteWorkItemFunction, null);
+                        mDispatcher.QueueWorkItem(mOnExecuteWorkItemFunction, null);
                     }
                 }
             }

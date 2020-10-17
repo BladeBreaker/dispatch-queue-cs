@@ -2,9 +2,9 @@
 
 namespace Dispatch
 {
-    public class ManagedThreadPool : IThreadPool
+    public class ManagedThreadPoolDispatcher : IDispatcher
     {
-        public ManagedThreadPool()
+        public ManagedThreadPoolDispatcher()
         {
         }
 

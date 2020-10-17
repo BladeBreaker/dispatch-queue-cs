@@ -41,7 +41,7 @@ namespace Dispatch
         private readonly TimerQueueDataComparer mTimerQueueDataComparer = new TimerQueueDataComparer();
 
         private readonly IDispatchQueue mDispatchQueue;
-        private readonly IThreadPool mThreadPool;
+        private readonly IDispatcher mDispatcher;
 
         //mTimerQueueData is used across multiple threads and must be locked
         // all TimerQueueData's added to this list will be ordered on insertion from oldest TargetTime to earliest
@@ -55,10 +55,10 @@ namespace Dispatch
 
         #region Constructors
 
-        public TimerQueue(IDispatchQueue dispatchQueue, IThreadPool threadPool)
+        public TimerQueue(IDispatchQueue dispatchQueue, IDispatcher dispatcher)
         {
             mDispatchQueue = dispatchQueue ?? throw new ArgumentNullException("dispatchQueue");
-            mThreadPool = threadPool ?? throw new ArgumentNullException("threadPool");
+            mDispatcher = dispatcher ?? throw new ArgumentNullException("dispatcher");
 
             mTimer = new Timer(OnTimerExecute);
 
@@ -90,7 +90,7 @@ namespace Dispatch
             };
 
             // boxed "data" but ... I don't see an alternative
-            mThreadPool.QueueWorkItem(mScheduleWorkForExecutionCallback, data);
+            mDispatcher.QueueWorkItem(mScheduleWorkForExecutionCallback, data);
         }
 
         #endregion
