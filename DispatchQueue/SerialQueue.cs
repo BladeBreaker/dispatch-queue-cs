@@ -9,10 +9,7 @@ using System.Threading;
 namespace Dispatch
 {
     /// <summary>
-    /// <para>
     /// SerialQueue which takes work to be executed serially on a given thread pool
-    /// </para>
-    /// This implementation attempts to avoid allocations wherever possible 
     /// </summary>
     public class SerialQueue : IDispatchQueue
     {
@@ -92,25 +89,6 @@ namespace Dispatch
         #region Public Methods
 
         /// <summary>
-        /// Will dispatch the work delegate to the thread pool once all the previously dispatched work is completed
-        /// </summary>
-        /// <param name="context">User data to pass to the work delegate</param>
-        /// <param name="work">Delegate which will perform the work. Must not be null</param>
-        public void DispatchAsync(object? context, WaitCallback work)
-        {
-            if (work == null)
-            {
-                throw new ArgumentNullException("work");
-            }
-
-            mQueue.Enqueue(new WorkData { Work = work, Context = context });
-
-            // try to dequeue and run a task if there isn't one running already.
-            AttemptDequeue();
-        }
-
-
-        /// <summary>
         /// Will dispatch the work delegate to this queue once at least the specified amount of time has passed
         /// </summary>
         /// <param name="when">Amount of time to wait before submitting the work to this queue</param>
@@ -131,6 +109,25 @@ namespace Dispatch
         public void DispatchAfter(DateTime when, object? context, WaitCallback work)
         {
             mTimerQueue.DispatchAfter(when, context, work);
+        }
+
+
+        /// <summary>
+        /// Will dispatch the work delegate to the thread pool once all the previously dispatched work is completed
+        /// </summary>
+        /// <param name="context">User data to pass to the work delegate</param>
+        /// <param name="work">Delegate which will perform the work. Must not be null</param>
+        public void DispatchAsync(object? context, WaitCallback work)
+        {
+            if (work == null)
+            {
+                throw new ArgumentNullException("work");
+            }
+
+            mQueue.Enqueue(new WorkData { Work = work, Context = context });
+
+            // try to dequeue and run a task if there isn't one running already.
+            AttemptDequeue();
         }
 
         #endregion
