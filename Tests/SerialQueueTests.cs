@@ -28,7 +28,7 @@ namespace Tests
         [TestMethod]
         public void AsyncRunsOnSeparateThreads()
         {
-            SerialQueue queue = new SerialQueue(new ManagedThreadPool());
+            SerialQueue queue = new SerialQueue(new ManagedThreadPoolDispatcher());
             
             int threadId = Thread.CurrentThread.ManagedThreadId;
 
@@ -44,7 +44,7 @@ namespace Tests
         [TestMethod]
         public void SyncRunsOnSeparateThreads()
         {
-            SerialQueue queue = new SerialQueue(new ManagedThreadPool());
+            SerialQueue queue = new SerialQueue(new ManagedThreadPoolDispatcher());
 
             int threadId = Thread.CurrentThread.ManagedThreadId;
 
@@ -60,7 +60,7 @@ namespace Tests
         [TestMethod]
         public void SyncRunsSynchronously()
         {
-            SerialQueue queue = new SerialQueue(new ManagedThreadPool());
+            SerialQueue queue = new SerialQueue(new ManagedThreadPoolDispatcher());
 
             int numberTest = 0;
 
@@ -77,7 +77,7 @@ namespace Tests
         [TestMethod]
         public void TasksRunOneAtATime()
         {
-            SerialQueue queue = new SerialQueue(new ManagedThreadPool());
+            SerialQueue queue = new SerialQueue(new ManagedThreadPoolDispatcher());
 
             bool taskRunning = false;
 
@@ -107,7 +107,7 @@ namespace Tests
         {
             int numberTest = 0;
 
-            SerialQueue queue = new SerialQueue(new ManagedThreadPool());
+            SerialQueue queue = new SerialQueue(new ManagedThreadPoolDispatcher());
 
             for (int i = 0; i < 100; ++i)
             {
@@ -127,7 +127,7 @@ namespace Tests
         [TestMethod]
         public void TimerQueueActuallyFires()
         {
-            SerialQueue queue = new SerialQueue(new ManagedThreadPool());
+            SerialQueue queue = new SerialQueue(new ManagedThreadPoolDispatcher());
             AutoResetEvent waitHandle = new AutoResetEvent(false);
 
             WaitCallback cb = (_) =>
@@ -143,7 +143,7 @@ namespace Tests
         [TestMethod]
         public void TimerQueueFiresInProperOrder()
         {
-            SerialQueue queue = new SerialQueue(new ManagedThreadPool());
+            SerialQueue queue = new SerialQueue(new ManagedThreadPoolDispatcher());
             AutoResetEvent waitHandle = new AutoResetEvent(false);
 
             int numberOfExecutions = 0;
